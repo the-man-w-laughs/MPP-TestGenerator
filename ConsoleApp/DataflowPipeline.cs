@@ -3,7 +3,7 @@ using Core;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-public class DataflowPipeline
+public class DataflowPipeline: IDataflowPipeline
 {
     private int _maxCuncurrentInput;
     private int _maxCuncurrentOutput;
@@ -20,7 +20,7 @@ public class DataflowPipeline
         _maxConcurrentProcessing = maxConcurrentProcessing;
     }
 
-    public async Task GenerateTestsAsync()
+    public async Task ExecuteAsync()
     {
         var bufferBlock = new BufferBlock<string>();
 
@@ -65,9 +65,9 @@ public class DataflowPipeline
     {
         var testGenerator = new XUnitTestGenerator();
 
-        var tests = testGenerator.GenerateTestsAsync(sourceCode);
-
-        return tests;
+        //var tests = testGenerator.GenerateTestsAsync(sourceCode);
+        //return tests;
+        throw new NotImplementedException();
     }
 
     private async Task WriteTests(string tests)
