@@ -15,16 +15,19 @@ static class Program
     static async Task Main()
     {
         string inputDir;
-        Console.Write($"Input dir: ");
-        inputDir = Console.ReadLine();
+        //Console.Write($"Input dir: ");
+        //inputDir = Console.ReadLine();
+        inputDir = "D:\\Проекты\\5йСеместр\\c#\\TestGenerator\\Tests\\InputTestsFilesDir";
         while (!Directory.Exists(inputDir))
         {
             Console.WriteLine($"Directory doesn't exist: \"{inputDir}\".");
             inputDir = Console.ReadLine();
         }
-        Console.WriteLine($"Output dir: ");
+
         string outputDir;
-        outputDir = Console.ReadLine();
+        //Console.Write($"Output dir: ");        
+        //outputDir = Console.ReadLine();
+        outputDir = "D:\\Проекты\\5йСеместр\\c#\\TestGenerator\\Tests\\OutputTestsFilesDir";
         while (!Directory.Exists(outputDir))
         {
             Console.WriteLine($"Directory doesn't exist: \"{outputDir}\".");

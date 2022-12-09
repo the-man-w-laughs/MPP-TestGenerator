@@ -63,11 +63,8 @@ public class DataflowPipeline: IDataflowPipeline
 
     private List<string> ProcessSourceCode(string sourceCode)
     {
-        var testGenerator = new XUnitTestGenerator();
-
-        //var tests = testGenerator.GenerateTestsAsync(sourceCode);
-        //return tests;
-        throw new NotImplementedException();
+        var tests = XUnitTestGenerator.GenerateTests(sourceCode);
+        return tests;
     }
 
     private async Task WriteTests(string tests)

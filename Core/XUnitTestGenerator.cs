@@ -10,7 +10,7 @@ public class XUnitTestGenerator
 {
     private class ClassVisitor : CSharpSyntaxWalker
     {
-        public List<SyntaxNode> classes = new List<SyntaxNode>();
+        public List<ClassDeclarationSyntax> classes = new List<ClassDeclarationSyntax>();
 
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
@@ -25,7 +25,7 @@ public class XUnitTestGenerator
         var tests = new List<string>();
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code);
         CompilationUnitSyntax root = tree.GetCompilationUnitRoot();
-        var usingsList= root.Usings.Select(x => x.Name.ToString()).ToList();
+        var usingsList = root.Usings.Select(x => x.Name.ToString()).ToList();
         var usingsStr = getUsingsStr(usingsList);
         
         var classVisitor = new ClassVisitor();
@@ -35,7 +35,9 @@ public class XUnitTestGenerator
         {
             var classTests = new StringBuilder();            
             var methodNames = classNode.ChildNodes().
-                Where(x => x.GetType() == typeof(MethodDeclarationSyntax)).
+                Where(x => x.GetType() == typeof(MethodDeclarationSyntax) && ((MethodDeclarationSyntax)x).Modifiers.Where(modifier =>
+                    modifier.Kind() == SyntaxKind.PublicKeyword)
+                .Any()).
                 Select(x => ((MethodDeclarationSyntax)x).Identifier.ToString()).ToList();
 
             var mathodNamesDic = methodNames
@@ -46,7 +48,7 @@ public class XUnitTestGenerator
             classTests.Append(usingsStr);
             if (classNamespace != null)
             {
-                classTests.Append($"using {GetNamespaceFrom(classNode)};\n");
+                classTests.Append($"using {GetNamespaceFrom(classNode)};\n\n");
                 classTests.Append($"namespace {classNamespace}.Tests;\n\n");
             }
             else
@@ -55,7 +57,7 @@ public class XUnitTestGenerator
             }
 
 
-            classTests.Append($"public class {((ClassDeclarationSyntax)classNode).Identifier.ToString()}\n");
+            classTests.Append($"public class {classNode.Identifier.ToString()}Tests\n");
             classTests.Append("{\n");
             foreach (var methodName in mathodNamesDic)
             {   
