@@ -11,8 +11,7 @@ namespace TestGenerator.Core;
 
 public class NewClassRewriter : CSharpSyntaxRewriter
 {
-    private ConcurrentDictionary<string, bool>? _methodNamesDic;
-    private ConcurrentBag<string> _methodNames = new();
+    private ConcurrentDictionary<string, int>? _methodNamesDic;
     public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
     {
         if (node.Modifiers.Where(modifier => modifier.Kind() == SyntaxKind.PublicKeyword).Any())
@@ -20,15 +19,10 @@ public class NewClassRewriter : CSharpSyntaxRewriter
             var identifier = node.Identifier.Text;
 
             var newIdentifierStr = "";
-            if (_methodNamesDic[identifier])
-            {
-                int index = 1;
-                while (_methodNames.Contains(identifier + index))
-                {
-                    index++;
-                }
-                _methodNames.Add(identifier + index);
-                newIdentifierStr = identifier + index + "Test";
+            if (_methodNamesDic[identifier] > 0)
+            {             
+                newIdentifierStr = identifier + _methodNamesDic[identifier] + "Test";
+                _methodNamesDic[identifier]++;
             }
             else
             {
@@ -89,8 +83,8 @@ public class NewClassRewriter : CSharpSyntaxRewriter
 
         var methodNamesDic = methodNames
        .GroupBy(p => p)
-       .ToDictionary(p => p.Key, q => q.Count() > 1);
-        _methodNamesDic = new ConcurrentDictionary<string, bool>(methodNamesDic);
+       .ToDictionary(p => p.Key, q => q.Count() == 1 ? 0 : 1);
+        _methodNamesDic = new ConcurrentDictionary<string, int>(methodNamesDic);
         return base.VisitClassDeclaration(newNameClass);
     }
 }
