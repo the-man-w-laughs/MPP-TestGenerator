@@ -1,5 +1,5 @@
 using System.Threading.Tasks.Dataflow;
-using Core;
+using Core.Generators;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -63,7 +63,7 @@ public class DataflowPipeline: IDataflowPipeline
 
     private List<string> ProcessSourceCode(string sourceCode)
     {
-        var tests = XUnitTestGenerator.GenerateTests(sourceCode);
+        var tests = NewXUnitTestGenerator.GetInstance().GenerateTests(sourceCode);
         return tests;
     }
 

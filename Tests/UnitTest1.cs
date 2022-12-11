@@ -1,8 +1,8 @@
-using Core;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
 using System;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Core.Generators;
 
 namespace Tests;
 
@@ -50,7 +50,7 @@ namespace NS1
         }
     }
 }";
-        var tests = XUnitTestGenerator.GenerateTests(programText);
+        var tests = NewXUnitTestGenerator.GetInstance().GenerateTests(programText);
 
         //verify files count
         Assert.Equal(2, tests.Count);
@@ -125,6 +125,38 @@ namespace NS1
         Assert.Contains("SecondMethodTest", methodNames);
         Assert.Contains("ThirdMethodTest", methodNames);
 
-    }
 
+
+        var comp = SyntaxFactory.CompilationUnit()
+        .AddMembers(
+            SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName("ACO"))
+                    .AddMembers(
+                    SyntaxFactory.ClassDeclaration("MainForm")
+                        .AddMembers(
+                            SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName("System.Windows.Forms.Timer"), "Ticker")
+                                    .AddAccessorListAccessors(
+                                    SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration).WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)),
+                                    SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration).WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))),
+                            SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("void"), "Main")
+                                    .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                                    .WithBody(SyntaxFactory.Block())
+                            )
+                    )
+            );
+
+        var console = SyntaxFactory.IdentifierName("Console");
+        var writeline = SyntaxFactory.IdentifierName("WriteLine");
+        var memberaccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, console, writeline);
+
+        var argument = SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("A")));
+        var argumentList = SyntaxFactory.SeparatedList(new[] { argument });
+
+        var writeLineCall =
+            SyntaxFactory.ExpressionStatement(
+            SyntaxFactory.InvocationExpression(memberaccess,
+            SyntaxFactory.ArgumentList(argumentList)));
+
+        var text = writeLineCall.ToFullString();
+
+    }
 }

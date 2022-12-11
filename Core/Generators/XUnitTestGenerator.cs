@@ -1,39 +1,31 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using Core.Interfaces;
+using Core.AbstractClasses;
 
-namespace Core;
-public class XUnitTestGenerator
+namespace Core.Generators;
+public class XUnitTestGenerator : Singleton<XUnitTestGenerator>, ITestGenerator
 {
-    private class ClassVisitor : CSharpSyntaxWalker
-    {
-        public List<ClassDeclarationSyntax> classes = new List<ClassDeclarationSyntax>();
-
-        public override void VisitClassDeclaration(ClassDeclarationSyntax node)
-        {
-            base.VisitClassDeclaration(node);
-
-            classes.Add(node); // save your visited classes
-        }
-    }
     //main class method
-    public static List<string> GenerateTests(string code)
+    public List<string> GenerateTests(string code)
     {
         var tests = new List<string>();
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code);
         CompilationUnitSyntax root = tree.GetCompilationUnitRoot();
         var usingsList = root.Usings.Select(x => x.Name.ToString()).ToList();
         var usingsStr = getUsingsStr(usingsList);
-        
+
         var classVisitor = new ClassVisitor();
         classVisitor.Visit(root);
 
         foreach (var classNode in classVisitor.classes)
         {
-            var classTests = new StringBuilder();            
+            var classTests = new StringBuilder();
             var methodNames = classNode.ChildNodes().
                 Where(x => x.GetType() == typeof(MethodDeclarationSyntax) && ((MethodDeclarationSyntax)x).Modifiers.Where(modifier =>
                     modifier.Kind() == SyntaxKind.PublicKeyword)
@@ -60,7 +52,7 @@ public class XUnitTestGenerator
             classTests.Append($"public class {classNode.Identifier.ToString()}Tests\n");
             classTests.Append("{\n");
             foreach (var methodName in mathodNamesDic)
-            {   
+            {
                 if (methodName.Value != 1)
                     for (int i = 0; i < methodName.Value; i++)
                     {
@@ -76,7 +68,7 @@ public class XUnitTestGenerator
         return tests;
     }
 
-    private static string getMethodTestStr(string methodName)
+    private string getMethodTestStr(string methodName)
     {
         var test = new StringBuilder();
 
@@ -87,9 +79,9 @@ public class XUnitTestGenerator
         test.Append("\t}\n\n");
         return test.ToString();
     }
-    private static string getUsingsStr(IEnumerable<string> usings)
+    private string getUsingsStr(IEnumerable<string> usings)
     {
-        var usingsStr = new StringBuilder();        
+        var usingsStr = new StringBuilder();
         foreach (var us in usings)
         {
             usingsStr.Append($"using {us};\n");
@@ -98,7 +90,7 @@ public class XUnitTestGenerator
         return usingsStr.ToString();
     }
 
-    private static string? GetNamespaceFrom(SyntaxNode s)
+    private string? GetNamespaceFrom(SyntaxNode s)
     {
         var result = "";
         while (s.Parent.GetType() == typeof(NamespaceDeclarationSyntax) ||

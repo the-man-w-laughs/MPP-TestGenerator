@@ -7,6 +7,6 @@ using HelloWorld;
 
 namespace HelloWorld.Tests;
 
-public class Program2
+public class Program2Tests
 {
 }
