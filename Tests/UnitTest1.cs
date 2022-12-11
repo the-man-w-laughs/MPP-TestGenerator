@@ -22,7 +22,7 @@ namespace NS1
 {
     namespace NS2
     {
-        class Class1
+        public class Class1
         {
             private void FirstMethod()
             {                
@@ -37,7 +37,7 @@ namespace NS1
         }
     }
 
-    class Class2
+    public class Class2
     {
         public void FirstMethod()
         {                

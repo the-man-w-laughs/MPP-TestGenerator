@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,23 +11,31 @@ namespace TestGenerator.Core;
 
 public class NewClassRewriter : CSharpSyntaxRewriter
 {
-    private ConcurrentBag<string> _uniqueMethods = new();    
+    private ConcurrentDictionary<string, bool>? _methodNamesDic;
+    private ConcurrentBag<string> _methodNames = new();
     public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
     {
-        if (node.Modifiers.First().IsKind(SyntaxKind.PublicKeyword))
+        if (node.Modifiers.Where(modifier => modifier.Kind() == SyntaxKind.PublicKeyword).Any())
         {
-            var identifierText = node.Identifier.Text;
+            var identifier = node.Identifier.Text;
 
-            int index = 0;
-
-            while (_uniqueMethods.Contains(identifierText + (index == 0 ? "" : index)))
+            var newIdentifierStr = "";
+            if (_methodNamesDic[identifier])
             {
-                index++;
+                int index = 1;
+                while (_methodNames.Contains(identifier + index))
+                {
+                    index++;
+                }
+                _methodNames.Add(identifier + index);
+                newIdentifierStr = identifier + index + "Test";
+            }
+            else
+            {
+                newIdentifierStr = identifier + "Test";
             }
 
-            _uniqueMethods.Add(identifierText + (index == 0 ? "" : index));
-
-            var newIdentifier = Identifier(identifierText + (index == 0 ? "" : index) + "Test");
+            var newIdentifier = SyntaxFactory.Identifier(newIdentifierStr);
 
             var newMethod = MethodDeclaration(
                                 PredefinedType(
@@ -68,10 +78,19 @@ public class NewClassRewriter : CSharpSyntaxRewriter
     public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
     {
         var identifierText = node.Identifier.Text;
-        var newClassDeclaration = ClassDeclaration(identifierText + "Tests")
-                .WithModifiers(
-                    TokenList(
-                        Token(SyntaxKind.PublicKeyword)));
-        return base.VisitClassDeclaration(newClassDeclaration);
+
+        var newNameClass = node.WithIdentifier(Identifier(identifierText + "Tests"));
+
+        var methodNames = node.ChildNodes().
+                Where(x => x.GetType() == typeof(MethodDeclarationSyntax) && ((MethodDeclarationSyntax)x).Modifiers.Where(modifier =>
+                    modifier.Kind() == SyntaxKind.PublicKeyword)
+                .Any()).
+                Select(x => ((MethodDeclarationSyntax)x).Identifier.ToString()).ToList();
+
+        var methodNamesDic = methodNames
+       .GroupBy(p => p)
+       .ToDictionary(p => p.Key, q => q.Count() > 1);
+        _methodNamesDic = new ConcurrentDictionary<string, bool>(methodNamesDic);
+        return base.VisitClassDeclaration(newNameClass);
     }
 }
